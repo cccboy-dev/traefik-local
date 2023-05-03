@@ -5,6 +5,7 @@ services:
     image: traefik
     container_name: traefik
     command: --api.insecure=true --providers.docker
+    restart: always
     ports:
       - "80:80"
       - "8080:8080"
@@ -16,3 +17,51 @@ services:
     labels:
       - "traefik.http.routers.traefik_dashboard.rule=Host(`traefik.localhost`)"
       - "traefik.http.routers.traefik_dashboard.service=api@internal"
+    networks:
+      - traefik_dev
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=123456
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    labels:
+      - "traefik.http.routers.postgres.rule=Host(`postgres.localhost`)"
+      - "traefik.http.routers.postgres.service=svc_postgres"
+      - "traefik.http.services.svc_postgres.loadbalancer.server.port=5432"
+    networks:
+      - traefik_dev
+
+  pgadmin4:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=wuli.croatia@foxmail.com
+      - PGADMIN_DEFAULT_PASSWORD=cccboy
+    labels:
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
+    networks:
+      - traefik_dev
+
+  pgcli:
+    image: pygmy/pgcli
+    container_name: pgcli
+    restart: always
+    networks:
+      - traefik_dev
+
+volumes:
+  postgres:
+
+
+networks:
+  traefik_dev:
+    name: traefik_dev
+    driver: bridge
